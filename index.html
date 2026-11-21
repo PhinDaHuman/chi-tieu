@@ -43,9 +43,11 @@
   };
   var KHOA = 'chiTieu.token';
   var q = new URLSearchParams(location.search), h = new URLSearchParams(location.hash.slice(1));
-  var ban = BAN[q.get('ban')] || BAN.chinh;
-  function doc() { try { return localStorage.getItem(KHOA) || ''; } catch (e) { return ''; } }
-  function luu(t) { try { localStorage.setItem(KHOA, t); } catch (e) { /* chế độ riêng tư */ } }
+  function doc(k) { try { return localStorage.getItem(k || KHOA) || ''; } catch (e) { return ''; } }
+  function luu(t, k) { try { localStorage.setItem(k || KHOA, t); } catch (e) { /* chế độ riêng tư */ } }
+  // Nhớ bản đang dùng (?ban=thu / ?ban=chinh) vì biểu tượng màn hình chính có thể mở lại không kèm ?ban
+  if (BAN[q.get('ban')]) luu(q.get('ban'), 'chiTieu.ban');
+  var ban = BAN[q.get('ban')] || BAN[doc('chiTieu.ban')] || BAN.chinh;
   if (q.has('doima')) { try { localStorage.removeItem(KHOA); } catch (e) {} }
   var token = h.get('t') || doc();
   if (h.get('t')) luu(h.get('t'));
