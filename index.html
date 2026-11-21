@@ -25,6 +25,10 @@
   button { width: 100%; margin-top: 14px; font: inherit; font-size: 17px; font-weight: 600; color: #fff; background: #ff6b3d;
     border: 0; border-radius: 24px; padding: 14px; }
   button.phu { background: #3a3a3c; }
+  iframe { opacity: 0; transition: opacity .2s; }
+  iframe.san { opacity: 1; }
+  #cho { display: none; position: fixed; inset: 0; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: #8e8e93; font-size: 15px; }
+  #cho img { width: 72px; height: 72px; border-radius: 16px; }
   #loi { display: none; position: fixed; inset: 0; z-index: 5; background: rgba(0,0,0,.85); padding: 80px 24px 0; }
   #loi > div { max-width: 360px; margin: 0 auto; }
   #loi code { display: block; color: #8e8e93; font-size: 12px; margin: -8px 0 12px; word-break: break-all; }
@@ -37,12 +41,12 @@
   <input id="tk" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Mã truy cập">
   <button type="submit">Mở</button>
 </form>
+<div id="cho"><img src="icon-180.png" alt=""><span>Đang mở…</span></div>
 <div id="loi"><div>
   <h1>Chưa mở được app</h1>
   <p>App không phản hồi sau 10 giây. Có thể do mạng, mã truy cập sai, hoặc bản app chưa cho phép mở trong trang này.</p>
   <code id="loiCt"></code>
   <button id="thuLai">Thử lại</button>
-  <button class="phu" id="doiBan"></button>
   <button class="phu" id="doiMa">Nhập lại mã truy cập</button>
 </div></div>
 <script>
@@ -50,16 +54,16 @@
   // trang tự đặt thanh trạng thái, biểu tượng, tên trên màn hình chính.
   // Không chứa token: token lấy từ #t=… (chỉ trên máy, không gửi lên mạng) hoặc nhập một lần, lưu localStorage.
   var BAN = {
-    chinh: 'AKfycbxr1qDWI8xkORE3XH63_-xVXZ0UOHsQvN3T2O0q5WVeMoTvZt97KfAvrHU-K2O813yu',   // /exec trên iPhone
-    thu: 'AKfycbwAByBfOIFRESvufGPYbB4bgJbXgrmB1kx5HBnFLm63hRZ_4U3gC_G_iyE1n2-hJ84M',   // bản thử (?ban=thu hoặc #ban=thu)
+    chinh: 'AKfycbxr1qDWI8xkORE3XH63_-xVXZ0UOHsQvN3T2O0q5WVeMoTvZt97KfAvrHU-K2O813yu',   // /exec — bản dùng hằng ngày
+    thu: 'AKfycbwAByBfOIFRESvufGPYbB4bgJbXgrmB1kx5HBnFLm63hRZ_4U3gC_G_iyE1n2-hJ84M',    // bản thử: chỉ khi mở với ?thu=1
   };
   var KHOA = 'chiTieu.token';
   var q = new URLSearchParams(location.search), h = new URLSearchParams(location.hash.slice(1));
   function doc(k) { try { return localStorage.getItem(k || KHOA) || ''; } catch (e) { return ''; } }
   function luu(t, k) { try { localStorage.setItem(k || KHOA, t); } catch (e) { /* chế độ riêng tư */ } }
-  // Nhớ bản đang dùng (?ban=thu / ?ban=chinh) vì biểu tượng màn hình chính có thể mở lại không kèm ?ban
-  var tenBan = BAN[q.get('ban')] ? q.get('ban') : BAN[h.get('ban')] ? h.get('ban') : BAN[doc('chiTieu.ban')] ? doc('chiTieu.ban') : 'chinh';
-  luu(tenBan, 'chiTieu.ban');
+  // Luôn dùng bản chính; bản thử chỉ khi địa chỉ có ?thu=1 (không ghi nhớ). ?ban=… cũ bị bỏ qua.
+  var tenBan = q.get('thu') === '1' ? 'thu' : 'chinh';
+  try { localStorage.removeItem('chiTieu.ban'); } catch (e) {}
   var ban = BAN[tenBan];
   if (q.has('doima')) { try { localStorage.removeItem(KHOA); } catch (e) {} }
   var token = h.get('t') || doc();
@@ -70,19 +74,20 @@
     f.title = 'Chi tiêu';
     f.allow = 'clipboard-write';
     document.body.appendChild(f);
+    var cho = document.getElementById('cho');
+    cho.style.display = 'flex';
+    function hien() { cho.style.display = 'none'; f.className = 'san'; }
     // App báo "san-sang" qua postMessage; quá 10 giây không thấy thì hiện thẻ lỗi để biết đang dùng bản nào
     var hen = setTimeout(function () {
       document.getElementById('loiCt').textContent = 'Bản: ' + tenBan + ' · toàn màn hình: ' + (navigator.standalone ? 'có' : 'không')
         + ' · ' + location.pathname + location.search;
       document.getElementById('loi').style.display = 'block';
+      hien();
     }, 10000);
     window.addEventListener('message', function (e) {
-      if (e.data && e.data.chiTieu === 'san-sang') { clearTimeout(hen); document.getElementById('loi').style.display = 'none'; }
+      if (e.data && e.data.chiTieu === 'san-sang') { clearTimeout(hen); document.getElementById('loi').style.display = 'none'; hien(); }
     });
   }
-  var khac = tenBan === 'thu' ? 'chinh' : 'thu';
-  document.getElementById('doiBan').textContent = khac === 'thu' ? 'Dùng bản thử' : 'Dùng bản chính';
-  document.getElementById('doiBan').onclick = function () { luu(khac, 'chiTieu.ban'); location.replace(location.pathname); };
   document.getElementById('thuLai').onclick = function () { location.reload(); };
   document.getElementById('doiMa').onclick = function () { try { localStorage.removeItem(KHOA); } catch (e) {} location.replace(location.pathname); };
   if (token) mo(token);
