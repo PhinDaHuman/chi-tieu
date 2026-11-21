@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Chi tiêu</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Chi tiêu">
+<meta name="theme-color" content="#000000">
+<meta name="referrer" content="no-referrer">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+  html, body { margin: 0; height: 100%; background: #000; color: #fff; overflow: hidden; overscroll-behavior: none;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; }
+  iframe { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; display: block; background: #000; }
+  form { display: none; max-width: 360px; margin: 0 auto; padding: 80px 24px 0; }
+  h1 { font-size: 22px; margin: 0 0 8px; }
+  p { color: #8e8e93; font-size: 15px; margin: 0 0 20px; line-height: 1.4; }
+  input { width: 100%; box-sizing: border-box; font: inherit; font-size: 17px; color: #fff; background: #2c2c2e; border: 0;
+    border-radius: 10px; padding: 12px; outline: none; -webkit-appearance: none; }
+  button { width: 100%; margin-top: 14px; font: inherit; font-size: 17px; font-weight: 600; color: #fff; background: #ff6b3d;
+    border: 0; border-radius: 24px; padding: 14px; }
+</style>
+</head>
+<body>
+<form id="f">
+  <h1>Chi tiêu</h1>
+  <p>Nhập mã truy cập (token) một lần. Mã chỉ lưu trên điện thoại này.</p>
+  <input id="tk" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Mã truy cập">
+  <button type="submit">Mở</button>
+</form>
+<script>
+  // Trang khởi động: nhúng web app Apps Script để Google không hiện dải cảnh báo phía trên và để
+  // trang tự đặt thanh trạng thái, biểu tượng, tên trên màn hình chính.
+  // Không chứa token: token lấy từ #t=… (chỉ trên máy, không gửi lên mạng) hoặc nhập một lần, lưu localStorage.
+  var BAN = {
+    chinh: 'AKfycbxr1qDWI8xkORE3XH63_-xVXZ0UOHsQvN3T2O0q5WVeMoTvZt97KfAvrHU-K2O813yu',   // /exec trên iPhone
+    thu: 'AKfycbwAByBfOIFRESvufGPYbB4bgJbXgrmB1kx5HBnFLm63hRZ_4U3gC_G_iyE1n2-hJ84M',   // bản thử @4 (?ban=thu)
+  };
+  var KHOA = 'chiTieu.token';
+  var q = new URLSearchParams(location.search), h = new URLSearchParams(location.hash.slice(1));
+  var ban = BAN[q.get('ban')] || BAN.chinh;
+  function doc() { try { return localStorage.getItem(KHOA) || ''; } catch (e) { return ''; } }
+  function luu(t) { try { localStorage.setItem(KHOA, t); } catch (e) { /* chế độ riêng tư */ } }
+  if (q.has('doima')) { try { localStorage.removeItem(KHOA); } catch (e) {} }
+  var token = h.get('t') || doc();
+  if (h.get('t')) luu(h.get('t'));
+  function mo(t) {
+    var f = document.createElement('iframe');
+    f.src = 'https://script.google.com/macros/s/' + ban + '/exec?app=1&token=' + encodeURIComponent(t);
+    f.title = 'Chi tiêu';
+    f.allow = 'clipboard-write';
+    document.body.appendChild(f);
+  }
+  if (token) mo(token);
+  else {
+    var form = document.getElementById('f');
+    form.style.display = 'block';
+    form.onsubmit = function (e) {
+      e.preventDefault();
+      var t = document.getElementById('tk').value.trim();
+      if (!t) return;
+      luu(t); form.style.display = 'none'; mo(t);
+    };
+  }
+  // Không cho kéo cả trang (nảy) ở phần bên ngoài khung app
+  document.addEventListener('touchmove', function (e) { if (e.target === document.body || e.target === document.documentElement) e.preventDefault(); }, { passive: false });
+</script>
+</body>
+</html>
