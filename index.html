@@ -73,7 +73,7 @@
     f.src = 'https://script.google.com/macros/s/' + ban + '/exec?app=1&token=' + encodeURIComponent(t)
       + (q.get('nhanh') === '1' ? '&nhanh=1' : '');   // biểu tượng thứ hai "Chi nhanh": mở thẳng Nhập nhanh
     f.title = 'Chi tiêu';
-    f.allow = 'clipboard-write';
+    f.allow = 'clipboard-write; microphone';   // micro: nút "giữ để nói" trong app
     document.body.appendChild(f);
     var cho = document.getElementById('cho');
     cho.style.display = 'flex';
